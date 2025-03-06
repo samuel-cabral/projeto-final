@@ -1,84 +1,117 @@
-# Turborepo starter
+# Aplicação de Chat de Proximidade
 
-This Turborepo starter is maintained by the Turborepo core team.
+Esta é uma aplicação de chat que permite que usuários se comuniquem quando estão próximos uns dos outros (até 200 metros de distância).
 
-## Using this example
+## Características
 
-Run the following command:
+1. Os usuários podem escolher um nome e definir sua localização (latitude e longitude).
+2. Usuários dentro de um raio de 200 metros podem se comunicar.
+3. Os usuários podem modificar suas posições durante a conversa.
+4. A cada 2 minutos, a lista de usuários próximos é atualizada.
+5. Se um usuário tentar enviar uma mensagem para alguém fora do alcance, a mensagem é armazenada em uma fila.
+6. Quando o destinatário entrar novamente no alcance, as mensagens armazenadas são entregues.
 
-```sh
-npx create-turbo@latest
-```
+## Tecnologias Utilizadas
 
-## What's inside?
+- **Backend**: Node.js, TypeScript, Fastify
+- **Message Broker**: RabbitMQ para enfileiramento de mensagens
+- **Gerenciamento de Monorepo**: Turborepo
 
-This Turborepo includes the following packages/apps:
+## Pré-requisitos
 
-### Apps and Packages
+- Node.js (v18 ou superior)
+- pnpm (v9 ou superior)
+- RabbitMQ (para o sistema de enfileiramento de mensagens)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Estrutura do Projeto
 
 ```
-cd my-turborepo
-pnpm build
+├── apps/
+│   └── server/           # Servidor de chat
+│       ├── src/
+│       │   ├── mom/      # Message-Oriented Middleware
+│       │   ├── models/   # Repositórios de dados
+│       │   ├── routes/   # Rotas da API
+│       │   └── services/ # Serviços de negócio
+│       └── package.json
+├── packages/
+│   └── core/             # Tipos e utilitários compartilhados
+│       ├── src/
+│       └── package.json
+└── package.json
 ```
 
-### Develop
+## Instalação
 
-To develop all apps and packages, run the following command:
+1. Clone o repositório:
+   ```
+   git clone [URL_DO_REPOSITORIO]
+   cd [NOME_DO_DIRETORIO]
+   ```
 
-```
-cd my-turborepo
-pnpm dev
-```
+2. Instale as dependências:
+   ```
+   pnpm install
+   ```
 
-### Remote Caching
+3. Inicie o RabbitMQ (você pode usar Docker):
+   ```
+   docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
+   ```
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## Executando o Projeto
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+1. Para construir todos os pacotes:
+   ```
+   pnpm build
+   ```
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+2. Para iniciar o servidor em modo de desenvolvimento:
+   ```
+   pnpm dev
+   ```
 
-```
-cd my-turborepo
-npx turbo login
-```
+3. Para iniciar o servidor em modo de produção:
+   ```
+   pnpm start
+   ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## API Endpoints
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Usuários
 
-```
-npx turbo link
-```
+- `POST /users` - Criar um novo usuário
+- `GET /users` - Listar todos os usuários
+- `GET /users/:id` - Obter um usuário específico
+- `PATCH /users/:id/location` - Atualizar a localização de um usuário
+- `GET /users/:id/nearby` - Obter usuários próximos
+- `DELETE /users/:id` - Remover um usuário
 
-## Useful Links
+### Mensagens
 
-Learn more about the power of Turborepo:
+- `POST /users/:id/messages` - Enviar uma mensagem
+- `GET /users/:id/queued-messages` - Obter mensagens em fila
 
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+## Exemplo de Uso
+
+1. Criar um usuário:
+   ```
+   curl -X POST http://localhost:3333/users -H "Content-Type: application/json" -d '{"name": "João", "latitude": 37.7749, "longitude": -122.4194}'
+   ```
+
+2. Atualizar localização:
+   ```
+   curl -X PATCH http://localhost:3333/users/USER_ID/location -H "Content-Type: application/json" -d '{"latitude": 37.7750, "longitude": -122.4195}'
+   ```
+
+3. Enviar mensagem:
+   ```
+   curl -X POST http://localhost:3333/users/SENDER_ID/messages -H "Content-Type: application/json" -d '{"content": "Olá, como vai?", "receiverId": "RECEIVER_ID"}'
+   ```
+
+## Limitações da Versão Atual
+
+- Armazenamento em memória (não persistente)
+- Sem interface de usuário
+- Sem autenticação/autorização
+- Sem WebSockets para comunicação em tempo real

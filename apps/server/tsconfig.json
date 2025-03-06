@@ -1,5 +1,11 @@
 {
-  "extends": "typescript-config/node-library.json",
+  "extends": "../../packages/typescript-config/node-library.json",
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "core": ["../../packages/core/src"]
+    }
+  }
 } 
